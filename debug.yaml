@@ -1,0 +1,29 @@
+name: Debug All Code Files
+
+# Run the job on every push and pull request event
+on:
+  push:
+  pull_request:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # Install the required debug tools
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install -y gdb
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+
+      # Loop over all code files in the repository
+      - name: Debug All Code Files
+        run: |
+          find . \( -type f \) -and \( ! -path "./.git/*" \) -exec bash -c 'echo "\nDebugging $0..." && cargo build --$SHLIBS && gdb target/debug/$0' _ {} \;
+        env:
+          RUSTFLAGS: "--cfg profile=\"check\" --cfg profile=\"release\""
